@@ -2,6 +2,7 @@ import { UserService } from '@ghostfolio/api/app/user/user.service';
 import { ConfigurationService } from '@ghostfolio/api/services/configuration/configuration.service';
 import { ExchangeRateDataService } from '@ghostfolio/api/services/exchange-rate-data/exchange-rate-data.service';
 import { PropertyService } from '@ghostfolio/api/services/property/property.service';
+import { CashflowQueueService } from '@ghostfolio/api/services/queues/cashflow/cashflow.service';
 import { DataGatheringService } from '@ghostfolio/api/services/queues/data-gathering/data-gathering.service';
 import { TwitterBotService } from '@ghostfolio/api/services/twitter-bot/twitter-bot.service';
 import {
@@ -22,6 +23,7 @@ export class CronService {
 
   public constructor(
     private readonly configurationService: ConfigurationService,
+    private readonly cashflowQueueService: CashflowQueueService,
     private readonly dataGatheringService: DataGatheringService,
     private readonly exchangeRateDataService: ExchangeRateDataService,
     private readonly propertyService: PropertyService,
@@ -46,6 +48,11 @@ export class CronService {
     if (this.configurationService.get('ENABLE_FEATURE_SUBSCRIPTION')) {
       this.twitterBotService.tweetFearAndGreedIndex();
     }
+  }
+
+  @Cron(CronExpression.EVERY_HOUR)
+  public async runEveryHour() {
+    await this.cashflowQueueService.enqueueRecurringProcessing();
   }
 
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)

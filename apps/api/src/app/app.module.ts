@@ -7,6 +7,7 @@ import { ExchangeRateDataModule } from '@ghostfolio/api/services/exchange-rate-d
 import { I18nService } from '@ghostfolio/api/services/i18n/i18n.service';
 import { PrismaModule } from '@ghostfolio/api/services/prisma/prisma.module';
 import { PropertyModule } from '@ghostfolio/api/services/property/property.module';
+import { CashflowQueueModule } from '@ghostfolio/api/services/queues/cashflow/cashflow.module';
 import { DataGatheringModule } from '@ghostfolio/api/services/queues/data-gathering/data-gathering.module';
 import { PortfolioSnapshotQueueModule } from '@ghostfolio/api/services/queues/portfolio-snapshot/portfolio-snapshot.module';
 import {
@@ -45,6 +46,7 @@ import { ExchangeRateModule } from './exchange-rate/exchange-rate.module';
 import { ExportModule } from './export/export.module';
 import { HealthModule } from './health/health.module';
 import { ImportModule } from './import/import.module';
+import { CashflowModule } from './cashflow/cashflow.module';
 import { InfoModule } from './info/info.module';
 import { LogoModule } from './logo/logo.module';
 import { OrderModule } from './order/order.module';
@@ -68,6 +70,7 @@ import { UserModule } from './user/user.module';
     AuthDeviceModule,
     AuthModule,
     BenchmarksModule,
+    CashflowModule,
     BullModule.forRoot({
       redis: {
         db: parseInt(process.env.REDIS_DB ?? '0', 10),
@@ -80,6 +83,7 @@ import { UserModule } from './user/user.module';
     ConfigModule.forRoot(),
     ConfigurationModule,
     CronModule,
+    CashflowQueueModule,
     DataGatheringModule,
     DataProviderModule,
     EventEmitterModule.forRoot(),

@@ -28,6 +28,7 @@ model Access {
 
 model Account {
   activities Order[]
+  cashflows  Cashflow[]
   balance    Float            @default(0)
   balances   AccountBalance[]
   comment    String?
@@ -63,6 +64,33 @@ model AccountBalance {
   @@unique([accountId, date])
   @@index([accountId])
   @@index([date])
+}
+
+model Cashflow {
+  account         Account           @relation(fields: [accountId, userId], onDelete: Cascade, references: [id, userId])
+  accountId       String
+  amount          Float
+  createdAt       DateTime          @default(now())
+  currency        String
+  description     String?
+  endDate         DateTime?
+  frequency       CashflowFrequency
+  id              String            @id @default(uuid())
+  isActive        Boolean           @default(true)
+  lastExecutionAt DateTime?
+  nextExecutionAt DateTime?
+  startDate       DateTime
+  type            CashflowType
+  updatedAt       DateTime          @updatedAt
+  userId          String
+  user            User              @relation(fields: [userId], onDelete: Cascade, references: [id])
+
+  @@index([accountId])
+  @@index([frequency])
+  @@index([isActive])
+  @@index([nextExecutionAt])
+  @@index([type])
+  @@index([userId])
 }
 
 model Analytics {
@@ -263,6 +291,7 @@ model User {
   accessesGive  Access[]        @relation("accessGive")
   accessToken   String?
   accounts      Account[]
+  cashflows     Cashflow[]
   activities    Order[]
   analytics     Analytics?
   apiKeys       ApiKey[]
@@ -351,6 +380,19 @@ enum Type {
   INTEREST
   LIABILITY
   SELL
+}
+
+enum CashflowFrequency {
+  DAILY
+  WEEKLY
+  MONTHLY
+  QUARTERLY
+  YEARLY
+}
+
+enum CashflowType {
+  INFLOW
+  OUTFLOW
 }
 
 enum ViewMode {

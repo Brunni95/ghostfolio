@@ -68,17 +68,18 @@ export class ImportController {
     }
 
     try {
-      const activities = await this.importService.import({
+      const { activities, cashflows } = await this.importService.import({
         isDryRun,
         maxActivitiesToImport,
         accountsWithBalancesDto: importData.accounts ?? [],
         activitiesDto: importData.activities,
+        cashflowsDto: importData.cashflows ?? [],
         assetProfilesWithMarketDataDto: importData.assetProfiles ?? [],
         tagsDto: importData.tags ?? [],
         user: this.request.user
       });
 
-      return { activities };
+      return { activities, cashflows };
     } catch (error) {
       Logger.error(error, ImportController);
 

@@ -1,5 +1,6 @@
 import { AccountModule } from '@ghostfolio/api/app/account/account.module';
 import { CacheModule } from '@ghostfolio/api/app/cache/cache.module';
+import { CashflowModule } from '@ghostfolio/api/app/cashflow/cashflow.module';
 import { OrderModule } from '@ghostfolio/api/app/order/order.module';
 import { PlatformModule } from '@ghostfolio/api/app/platform/platform.module';
 import { PortfolioModule } from '@ghostfolio/api/app/portfolio/portfolio.module';
@@ -24,6 +25,7 @@ import { ImportService } from './import.service';
   controllers: [ImportController],
   imports: [
     AccountModule,
+    CashflowModule,
     CacheModule,
     ConfigurationModule,
     DataGatheringModule,

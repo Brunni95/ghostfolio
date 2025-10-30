@@ -1,3 +1,4 @@
+import { CreateCashflowDto } from '@ghostfolio/api/app/cashflow/dto/create-cashflow.dto';
 import { CreateOrderDto } from '@ghostfolio/api/app/order/create-order.dto';
 
 import { Type } from 'class-transformer';
@@ -18,6 +19,12 @@ export class ImportDataDto {
   @Type(() => CreateOrderDto)
   @ValidateNested({ each: true })
   activities: CreateOrderDto[];
+
+  @IsArray()
+  @IsOptional()
+  @Type(() => CreateCashflowDto)
+  @ValidateNested({ each: true })
+  cashflows?: CreateCashflowDto[];
 
   @IsArray()
   @IsOptional()

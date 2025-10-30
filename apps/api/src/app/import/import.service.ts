@@ -1,5 +1,7 @@
 import { AccountService } from '@ghostfolio/api/app/account/account.service';
 import { CreateAccountDto } from '@ghostfolio/api/app/account/create-account.dto';
+import { CashflowService } from '@ghostfolio/api/app/cashflow/cashflow.service';
+import { CreateCashflowDto } from '@ghostfolio/api/app/cashflow/dto';
 import { CreateOrderDto } from '@ghostfolio/api/app/order/create-order.dto';
 import {
   Activity,
@@ -28,7 +30,7 @@ import {
 } from '@ghostfolio/common/types';
 
 import { Injectable } from '@nestjs/common';
-import { DataSource, Prisma, SymbolProfile } from '@prisma/client';
+import { Cashflow, DataSource, Prisma, SymbolProfile } from '@prisma/client';
 import { Big } from 'big.js';
 import { endOfToday, isAfter, isSameSecond, parseISO } from 'date-fns';
 import { omit, uniqBy } from 'lodash';
@@ -41,6 +43,7 @@ import { ImportDataDto } from './import-data.dto';
 export class ImportService {
   public constructor(
     private readonly accountService: AccountService,
+    private readonly cashflowService: CashflowService,
     private readonly configurationService: ConfigurationService,
     private readonly dataGatheringService: DataGatheringService,
     private readonly dataProviderService: DataProviderService,
@@ -154,6 +157,7 @@ export class ImportService {
   public async import({
     accountsWithBalancesDto,
     activitiesDto,
+    cashflowsDto,
     assetProfilesWithMarketDataDto,
     isDryRun = false,
     maxActivitiesToImport,
@@ -162,12 +166,13 @@ export class ImportService {
   }: {
     accountsWithBalancesDto: ImportDataDto['accounts'];
     activitiesDto: ImportDataDto['activities'];
+    cashflowsDto?: ImportDataDto['cashflows'];
     assetProfilesWithMarketDataDto: ImportDataDto['assetProfiles'];
     isDryRun?: boolean;
     maxActivitiesToImport: number;
     tagsDto: ImportDataDto['tags'];
     user: UserWithSettings;
-  }): Promise<Activity[]> {
+  }): Promise<{ activities: Activity[]; cashflows: Cashflow[] }> {
     const accountIdMapping: { [oldAccountId: string]: string } = {};
     const assetProfileSymbolMapping: { [oldSymbol: string]: string } = {};
     const tagIdMapping: { [oldTagId: string]: string } = {};
@@ -415,6 +420,7 @@ export class ImportService {
     }
 
     const activities: Activity[] = [];
+    const cashflows: Cashflow[] = [];
 
     for (const activity of activitiesExtendedWithErrors) {
       const accountId = activity.accountId;
@@ -602,7 +608,66 @@ export class ImportService {
       });
     }
 
-    return activities;
+    const normalizedCashflows: (CreateCashflowDto & { accountId: string })[] = (
+      cashflowsDto ?? []
+    ).map((cashflow) => {
+      const mappedAccountId =
+        accountIdMapping[cashflow.accountId] ?? cashflow.accountId;
+
+      return {
+        ...cashflow,
+        accountId: mappedAccountId
+      };
+    });
+
+    for (const cashflow of normalizedCashflows) {
+      if (!cashflow.accountId) {
+        continue;
+      }
+
+      if (isDryRun) {
+        const startDate = parseISO(cashflow.startDate);
+        const endDate = cashflow.endDate ? parseISO(cashflow.endDate) : null;
+        const isActive = cashflow.isActive ?? true;
+        const nextExecutionAt =
+          isActive && (!endDate || !isAfter(startDate, endDate))
+            ? startDate
+            : null;
+
+        cashflows.push({
+          accountId: cashflow.accountId,
+          amount: cashflow.amount,
+          createdAt: new Date(),
+          currency: cashflow.currency,
+          description: cashflow.description,
+          endDate,
+          frequency: cashflow.frequency,
+          id: uuidv4(),
+          isActive: nextExecutionAt ? isActive : false,
+          lastExecutionAt: null,
+          nextExecutionAt,
+          startDate,
+          type: cashflow.type,
+          updatedAt: new Date(),
+          userId: user.id
+        } as Cashflow);
+      } else {
+        const createdCashflow = await this.cashflowService.create({
+          ...cashflow,
+          userId: user.id
+        });
+
+        cashflows.push(createdCashflow);
+      }
+    }
+
+    cashflows.sort((cashflowA, cashflowB) => {
+      return (
+        Number(cashflowA.startDate) - Number(cashflowB.startDate)
+      );
+    });
+
+    return { activities, cashflows };
   }
 
   private async extendActivitiesWithErrors({
