@@ -31,6 +31,7 @@ import { AssetModule } from './asset/asset.module';
 import { AuthDeviceModule } from './auth-device/auth-device.module';
 import { AuthModule } from './auth/auth.module';
 import { CacheModule } from './cache/cache.module';
+import { CashflowModule } from './cashflow/cashflow.module';
 import { AiModule } from './endpoints/ai/ai.module';
 import { ApiKeysModule } from './endpoints/api-keys/api-keys.module';
 import { AssetsModule } from './endpoints/assets/assets.module';
@@ -77,6 +78,7 @@ import { UserModule } from './user/user.module';
       }
     }),
     CacheModule,
+    CashflowModule,
     ConfigModule.forRoot(),
     ConfigurationModule,
     CronModule,

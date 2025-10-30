@@ -10,6 +10,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   Account,
   AccountBalance,
+  CashflowType,
   Order,
   Platform,
   Prisma,
@@ -20,6 +21,7 @@ import { format } from 'date-fns';
 import { groupBy } from 'lodash';
 
 import { CashDetails } from './interfaces/cash-details.interface';
+import { CashflowWithBase } from './interfaces/cashflow-with-base.interface';
 
 @Injectable()
 export class AccountService {
@@ -187,11 +189,15 @@ export class AccountService {
       where.isExcluded = false;
     }
 
-    const { ACCOUNT: filtersByAccount } = groupBy(filters, ({ type }) => {
+    const groupedFilters = groupBy(filters, ({ type }) => {
       return type;
     });
 
-    if (filtersByAccount?.length > 0) {
+    const filtersByAccount = groupedFilters.ACCOUNT ?? [];
+    const filtersByCashflowCategory = groupedFilters.CASHFLOW_CATEGORY ?? [];
+    const filtersByCashflowType = groupedFilters.CASHFLOW_TYPE ?? [];
+
+    if (filtersByAccount.length > 0) {
       where.id = {
         in: filtersByAccount.map(({ id }) => {
           return id;
@@ -211,9 +217,82 @@ export class AccountService {
       );
     }
 
+    const cashflowWhere: Prisma.CashflowWhereInput = {
+      userId
+    };
+
+    const seriesWhere: Prisma.CashflowSeriesWhereInput = {
+      userId
+    };
+
+    if (withExcludedAccounts === false) {
+      cashflowWhere.account = { isExcluded: false };
+      seriesWhere.account = { isExcluded: false };
+    }
+
+    if (filtersByAccount.length > 0) {
+      const accountIds = filtersByAccount.map(({ id }) => {
+        return id;
+      });
+
+      cashflowWhere.accountId = { in: accountIds };
+      seriesWhere.accountId = { in: accountIds };
+    }
+
+    if (filtersByCashflowCategory.length > 0) {
+      const categories = filtersByCashflowCategory.map(({ id }) => {
+        return id;
+      });
+
+      cashflowWhere.category = { in: categories };
+      seriesWhere.category = { in: categories };
+    }
+
+    if (filtersByCashflowType.length > 0) {
+      const types = filtersByCashflowType.map(({ id }) => {
+        return id as CashflowType;
+      });
+
+      cashflowWhere.type = { in: types };
+      seriesWhere.type = { in: types };
+    }
+
+    const [cashflows, series] = await Promise.all([
+      this.prismaService.cashflow.findMany({
+        orderBy: { date: 'asc' },
+        where: cashflowWhere
+      }),
+      this.prismaService.cashflowSeries.findMany({
+        orderBy: { startDate: 'asc' },
+        where: seriesWhere
+      })
+    ]);
+
+    const cashflowsWithBase: CashflowWithBase[] = await Promise.all(
+      cashflows.map(async (cashflow) => {
+        const amountInBaseCurrency = await this.exchangeRateDataService.toCurrencyAtDate(
+          cashflow.amount,
+          cashflow.currency,
+          currency,
+          cashflow.date
+        );
+
+        return {
+          ...cashflow,
+          amountInBaseCurrency,
+          signedAmountInBaseCurrency:
+            cashflow.type === CashflowType.INFLOW
+              ? amountInBaseCurrency
+              : -amountInBaseCurrency
+        };
+      })
+    );
+
     return {
       accounts,
-      balanceInBaseCurrency: totalCashBalanceInBaseCurrency.toNumber()
+      balanceInBaseCurrency: totalCashBalanceInBaseCurrency.toNumber(),
+      cashflows: cashflowsWithBase,
+      series
     };
   }
 

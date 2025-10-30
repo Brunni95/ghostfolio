@@ -8,6 +8,8 @@ export class ApiService {
     filterByAccounts,
     filterByAssetClasses,
     filterByAssetSubClasses,
+    filterByCashflowCategories,
+    filterByCashflowTypes,
     filterByDataSource,
     filterByHoldingType,
     filterBySearchQuery,
@@ -17,6 +19,8 @@ export class ApiService {
     filterByAccounts?: string;
     filterByAssetClasses?: string;
     filterByAssetSubClasses?: string;
+    filterByCashflowCategories?: string;
+    filterByCashflowTypes?: string;
     filterByDataSource?: string;
     filterByHoldingType?: string;
     filterBySearchQuery?: string;
@@ -49,6 +53,18 @@ export class ApiService {
         return {
           id: assetClass,
           type: 'ASSET_SUB_CLASS'
+        } as Filter;
+      }),
+      ...cashflowCategories.map((category) => {
+        return {
+          id: category,
+          type: 'CASHFLOW_CATEGORY'
+        } as Filter;
+      }),
+      ...cashflowTypes.map((cashflowType) => {
+        return {
+          id: cashflowType,
+          type: 'CASHFLOW_TYPE'
         } as Filter;
       }),
       ...tagIds.map((tagId) => {
@@ -90,3 +106,5 @@ export class ApiService {
     return filters;
   }
 }
+    const cashflowCategories = filterByCashflowCategories?.split(',') ?? [];
+    const cashflowTypes = filterByCashflowTypes?.split(',') ?? [];

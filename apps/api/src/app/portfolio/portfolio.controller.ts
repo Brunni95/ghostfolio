@@ -80,6 +80,8 @@ export class PortfolioController {
     @Headers(HEADER_KEY_IMPERSONATION.toLowerCase()) impersonationId: string,
     @Query('accounts') filterByAccounts?: string,
     @Query('assetClasses') filterByAssetClasses?: string,
+    @Query('cashflowCategories') filterByCashflowCategories?: string,
+    @Query('cashflowTypes') filterByCashflowTypes?: string,
     @Query('dataSource') filterByDataSource?: string,
     @Query('range') dateRange: DateRange = 'max',
     @Query('symbol') filterBySymbol?: string,
@@ -98,6 +100,8 @@ export class PortfolioController {
     const filters = this.apiService.buildFiltersFromQueryParams({
       filterByAccounts,
       filterByAssetClasses,
+      filterByCashflowCategories,
+      filterByCashflowTypes,
       filterByDataSource,
       filterBySymbol,
       filterByTags
@@ -300,6 +304,8 @@ export class PortfolioController {
     @Headers(HEADER_KEY_IMPERSONATION.toLowerCase()) impersonationId: string,
     @Query('accounts') filterByAccounts?: string,
     @Query('assetClasses') filterByAssetClasses?: string,
+    @Query('cashflowCategories') filterByCashflowCategories?: string,
+    @Query('cashflowTypes') filterByCashflowTypes?: string,
     @Query('dataSource') filterByDataSource?: string,
     @Query('groupBy') groupBy?: GroupBy,
     @Query('range') dateRange: DateRange = 'max',
@@ -309,6 +315,8 @@ export class PortfolioController {
     const filters = this.apiService.buildFiltersFromQueryParams({
       filterByAccounts,
       filterByAssetClasses,
+      filterByCashflowCategories,
+      filterByCashflowTypes,
       filterByDataSource,
       filterBySymbol,
       filterByTags
@@ -400,6 +408,8 @@ export class PortfolioController {
     @Headers(HEADER_KEY_IMPERSONATION.toLowerCase()) impersonationId: string,
     @Query('accounts') filterByAccounts?: string,
     @Query('assetClasses') filterByAssetClasses?: string,
+    @Query('cashflowCategories') filterByCashflowCategories?: string,
+    @Query('cashflowTypes') filterByCashflowTypes?: string,
     @Query('dataSource') filterByDataSource?: string,
     @Query('holdingType') filterByHoldingType?: string,
     @Query('query') filterBySearchQuery?: string,
@@ -410,6 +420,8 @@ export class PortfolioController {
     const filters = this.apiService.buildFiltersFromQueryParams({
       filterByAccounts,
       filterByAssetClasses,
+      filterByCashflowCategories,
+      filterByCashflowTypes,
       filterByDataSource,
       filterByHoldingType,
       filterBySearchQuery,
@@ -434,6 +446,8 @@ export class PortfolioController {
     @Headers(HEADER_KEY_IMPERSONATION.toLowerCase()) impersonationId: string,
     @Query('accounts') filterByAccounts?: string,
     @Query('assetClasses') filterByAssetClasses?: string,
+    @Query('cashflowCategories') filterByCashflowCategories?: string,
+    @Query('cashflowTypes') filterByCashflowTypes?: string,
     @Query('dataSource') filterByDataSource?: string,
     @Query('groupBy') groupBy?: GroupBy,
     @Query('range') dateRange: DateRange = 'max',
@@ -443,6 +457,8 @@ export class PortfolioController {
     const filters = this.apiService.buildFiltersFromQueryParams({
       filterByAccounts,
       filterByAssetClasses,
+      filterByCashflowCategories,
+      filterByCashflowTypes,
       filterByDataSource,
       filterBySymbol,
       filterByTags
@@ -507,6 +523,8 @@ export class PortfolioController {
     @Headers(HEADER_KEY_IMPERSONATION.toLowerCase()) impersonationId: string,
     @Query('accounts') filterByAccounts?: string,
     @Query('assetClasses') filterByAssetClasses?: string,
+    @Query('cashflowCategories') filterByCashflowCategories?: string,
+    @Query('cashflowTypes') filterByCashflowTypes?: string,
     @Query('dataSource') filterByDataSource?: string,
     @Query('range') dateRange: DateRange = 'max',
     @Query('symbol') filterBySymbol?: string,
@@ -518,6 +536,8 @@ export class PortfolioController {
     const filters = this.apiService.buildFiltersFromQueryParams({
       filterByAccounts,
       filterByAssetClasses,
+      filterByCashflowCategories,
+      filterByCashflowTypes,
       filterByDataSource,
       filterBySymbol,
       filterByTags
