@@ -1,6 +1,7 @@
 import { AccountBalanceService } from '@ghostfolio/api/app/account-balance/account-balance.service';
 import { AccountService } from '@ghostfolio/api/app/account/account.service';
 import { CashDetails } from '@ghostfolio/api/app/account/interfaces/cash-details.interface';
+import { CashflowWithBase } from '@ghostfolio/api/app/account/interfaces/cashflow-with-base.interface';
 import { Activity } from '@ghostfolio/api/app/order/interfaces/activities.interface';
 import { OrderService } from '@ghostfolio/api/app/order/order.service';
 import { UserService } from '@ghostfolio/api/app/user/user.service';
@@ -40,6 +41,7 @@ import {
 import { DATE_FORMAT, getSum, parseDate } from '@ghostfolio/common/helper';
 import {
   AccountsResponse,
+  CashflowTimelineItem,
   EnhancedSymbolProfile,
   Filter,
   HistoricalDataItem,
@@ -69,6 +71,7 @@ import { REQUEST } from '@nestjs/core';
 import {
   Account,
   Type as ActivityType,
+  CashflowType,
   AssetClass,
   AssetSubClass,
   DataSource,
@@ -512,6 +515,10 @@ export class PortfolioService {
       currency: userCurrency
     });
 
+    const cashflowTimeline = this.getCashflowTimeline({
+      cashflows: cashDetails.cashflows
+    });
+
     const holdings: PortfolioDetails['holdings'] = {};
 
     const totalValueInBaseCurrency = currentValueInBaseCurrency.plus(
@@ -734,6 +741,7 @@ export class PortfolioService {
         portfolioCalculator,
         userCurrency,
         userId,
+        cashflowTimeline,
         balanceInBaseCurrency: cashDetails.balanceInBaseCurrency,
         emergencyFundHoldingsValueInBaseCurrency:
           this.getEmergencyFundHoldingsValueInBaseCurrency({
@@ -1673,6 +1681,76 @@ export class PortfolioService {
     return cashPositions;
   }
 
+  private getCashflowTimeline({
+    cashflows
+  }: {
+    cashflows: CashflowWithBase[];
+  }): CashflowTimelineItem[] {
+    if (cashflows.length === 0) {
+      return [];
+    }
+
+    const timeline: {
+      [date: string]: {
+        inflow: Big;
+        outflow: Big;
+      };
+    } = {};
+
+    for (const cashflow of cashflows) {
+      const normalizedDate = format(
+        set(cashflow.date, {
+          date: 1,
+          hours: 0,
+          minutes: 0,
+          seconds: 0,
+          milliseconds: 0
+        }),
+        DATE_FORMAT
+      );
+
+      if (!timeline[normalizedDate]) {
+        timeline[normalizedDate] = {
+          inflow: new Big(0),
+          outflow: new Big(0)
+        };
+      }
+
+      if (cashflow.type === CashflowType.INFLOW) {
+        timeline[normalizedDate].inflow = timeline[normalizedDate].inflow.plus(
+          cashflow.amountInBaseCurrency
+        );
+      } else {
+        timeline[normalizedDate].outflow = timeline[
+          normalizedDate
+        ].outflow.plus(cashflow.amountInBaseCurrency);
+      }
+    }
+
+    return Object.entries(timeline)
+      .sort(([dateA], [dateB]) => {
+        const first = parseISO(dateA);
+        const second = parseISO(dateB);
+
+        if (first.getTime() === second.getTime()) {
+          return 0;
+        }
+
+        return first.getTime() < second.getTime() ? -1 : 1;
+      })
+      .map(([date, { inflow, outflow }]) => {
+        const inflowValue = inflow.toNumber();
+        const outflowValue = outflow.toNumber();
+
+        return {
+          date,
+          inflow: inflowValue,
+          net: new Big(inflowValue).minus(outflowValue).toNumber(),
+          outflow: outflowValue
+        };
+      });
+  }
+
   private getDividendsByGroup({
     dividends,
     groupBy
@@ -1924,6 +2002,7 @@ export class PortfolioService {
 
   private async getSummary({
     balanceInBaseCurrency,
+    cashflowTimeline,
     emergencyFundHoldingsValueInBaseCurrency,
     filteredValueInBaseCurrency,
     impersonationId,
@@ -1932,6 +2011,7 @@ export class PortfolioService {
     userId
   }: {
     balanceInBaseCurrency: number;
+    cashflowTimeline: CashflowTimelineItem[];
     emergencyFundHoldingsValueInBaseCurrency: number;
     filteredValueInBaseCurrency: Big;
     impersonationId: string;
@@ -2092,6 +2172,7 @@ export class PortfolioService {
       filteredValueInPercentage: netWorth
         ? filteredValueInBaseCurrency.div(netWorth).toNumber()
         : undefined,
+      cashflowTimeline,
       fireWealth: {
         today: {
           valueInBaseCurrency: new Big(currentValueInBaseCurrency)

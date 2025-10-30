@@ -1,3 +1,4 @@
+import { CashflowTimelineItem } from './cashflow-timeline-item.interface';
 import { FireWealth } from './fire-wealth.interface';
 import { PortfolioPerformance } from './portfolio-performance.interface';
 
@@ -6,6 +7,7 @@ export interface PortfolioSummary extends PortfolioPerformance {
   annualizedPerformancePercent: number;
   annualizedPerformancePercentWithCurrencyEffect: number;
   cash: number;
+  cashflowTimeline?: CashflowTimelineItem[];
   committedFunds: number;
   dividendInBaseCurrency: number;
   emergencyFund: {
